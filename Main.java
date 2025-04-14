@@ -47,7 +47,6 @@ public class Main {
         appointmentManager.bookAppointment(new AppointmentBooking(appointmentManager.getPatients().get(0), schedule1.get(0), "booked"));
         appointmentManager.bookAppointment(new AppointmentBooking(appointmentManager.getPatients().get(3), schedule3.get(1), "booked"));
         appointmentManager.bookAppointment(new AppointmentBooking(appointmentManager.getPatients().get(4), schedule1.get(1), "booked"));
-        appointmentManager.bookAppointment(new AppointmentBooking(appointmentManager.getPatients().get(5), schedule2.get(0), "booked"));
 
         boolean running = true;
         while (running) {
@@ -55,6 +54,10 @@ public class Main {
             System.out.println("1. List all patients");
             System.out.println("2. List all bookings");
             System.out.println("3. List all physiotherapists");
+            System.out.println("4. Add patient");
+            System.out.println("5. Remove patient");
+            System.out.println("7. Cancel booking");
+            System.out.println("11. Exit");
             System.out.print("Choose an option: ");
 
             int choice = scanner.nextInt();
@@ -94,6 +97,35 @@ public class Main {
                     therapists.forEach(t ->
                             System.out.println(t.getId() + ": " + t.getName() + ", Specialties: " + String.join(", ", t.getExpertise())));
                 }
+
+                case 4 -> {
+                    System.out.print("Enter name: ");
+                    String name = scanner.nextLine();
+                    System.out.print("Enter address: ");
+                    String address = scanner.nextLine();
+                    System.out.print("Enter phone: ");
+                    String phone = scanner.nextLine();
+                    Patient newPatient = new Patient(name, address, phone);
+                    appointmentManager.addPatient(newPatient);
+                    System.out.println("Patient added.");
+                }
+                case 5 -> {
+                    System.out.print("Enter patient ID to remove: ");
+                    int id = scanner.nextInt();
+                    appointmentManager.removePatientById(id);
+                    System.out.println("Patient removed.");
+                }
+
+                case 7 -> {
+                    System.out.print("Enter booking ID to cancel: ");
+                    String bid = scanner.nextLine();
+                    if (appointmentManager.cancelBooking(bid))
+                        System.out.println("Booking canceled.");
+                    else
+                        System.out.println("Booking not found or already canceled.");
+                }
+
+                
                 
         scanner.close();
     }
