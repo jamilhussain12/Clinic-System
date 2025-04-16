@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
@@ -47,6 +48,7 @@ public class Main {
         appointmentManager.bookAppointment(new AppointmentBooking(appointmentManager.getPatients().get(0), schedule1.get(0), "booked"));
         appointmentManager.bookAppointment(new AppointmentBooking(appointmentManager.getPatients().get(3), schedule3.get(1), "booked"));
         appointmentManager.bookAppointment(new AppointmentBooking(appointmentManager.getPatients().get(4), schedule1.get(1), "booked"));
+        // appointmentManager.bookAppointment(new AppointmentBooking(appointmentManager.getPatients().get(5), schedule2.get(0), "booked"));
 
         boolean running = true;
         while (running) {
@@ -56,7 +58,11 @@ public class Main {
             System.out.println("3. List all physiotherapists");
             System.out.println("4. Add patient");
             System.out.println("5. Remove patient");
+            System.out.println("6. Book appointment");
             System.out.println("7. Cancel booking");
+            System.out.println("8. Attend appointment");
+            System.out.println("9. Change booking");
+            System.out.println("10. Print report");
             System.out.println("11. Exit");
             System.out.print("Choose an option: ");
 
@@ -97,7 +103,6 @@ public class Main {
                     therapists.forEach(t ->
                             System.out.println(t.getId() + ": " + t.getName() + ", Specialties: " + String.join(", ", t.getExpertise())));
                 }
-
                 case 4 -> {
                     System.out.print("Enter name: ");
                     String name = scanner.nextLine();
@@ -116,6 +121,100 @@ public class Main {
                     System.out.println("Patient removed.");
                 }
 
+                
+                case 6 -> {
+                        System.out.print("Enter patient ID: ");
+                        int pid = scanner.nextInt();
+                        scanner.nextLine();
+                    
+                        Patient p = appointmentManager.getPatients().stream()
+                            .filter(x -> x.getId() == pid)
+                            .findFirst()
+                            .orElse(null);
+                    
+                        if (p == null) {
+                            System.out.println("Patient not found.");
+                            break;
+                        }
+                    
+                        System.out.print("Book by (1) Expertise or (2) Physiotherapist Name? Enter 1 or 2: ");
+                        int choice2 = scanner.nextInt();
+                        scanner.nextLine(); 
+                    
+                        List<Treatment> availableTreatments = new ArrayList<>();
+                        int tIndex = 1;
+                    
+                        if (choice2 == 1) {
+                            Set<String> expertiseSet = therapists.stream()
+                                .flatMap(t -> Arrays.stream(t.getExpertise()))
+                                .collect(Collectors.toSet());
+                    
+                            System.out.println("Available Expertise:");
+                            expertiseSet.forEach(System.out::println);
+                    
+                            System.out.print("Enter expertise: ");
+                            String selectedExpertise = scanner.nextLine().trim();
+                    
+                            for (Physiotherapist physio : therapists) {
+                                if (Arrays.asList(physio.getExpertise()).contains(selectedExpertise)) {
+                                    for (Treatment tr : physio.getTimetable()) {
+                                        if (appointmentManager.isTreatmentAvailable(tr)) {
+                                            System.out.println(tIndex++ + ". " + tr.getName() + " - " + tr.getDateTime() + " (Physio: " + physio.getName() + ")");
+                                            availableTreatments.add(tr);
+                                        }
+                                    }
+                                }
+                            }
+                    
+                        } else if (choice2 == 2) {
+                            System.out.println("Available Physiotherapists:");
+                            therapists.forEach(t -> System.out.println("- " + t.getName()));
+                    
+                            System.out.print("Enter physiotherapist name: ");
+                            String physioName = scanner.nextLine().trim();
+                    
+                            Physiotherapist selected = therapists.stream()
+                                .filter(t -> t.getName().equalsIgnoreCase(physioName))
+                                .findFirst()
+                                .orElse(null);
+                    
+                            if (selected == null) {
+                                System.out.println("Physiotherapist not found.");
+                                break;
+                            }
+                    
+                            for (Treatment tr : selected.getTimetable()) {
+                                if (appointmentManager.isTreatmentAvailable(tr)) {
+                                    System.out.println(tIndex++ + ". " + tr.getName() + " - " + tr.getDateTime());
+                                    availableTreatments.add(tr);
+                                }
+                            }
+                    
+                        } else {
+                            System.out.println("Invalid choice.");
+                            break;
+                        }
+                    
+                        if (availableTreatments.isEmpty()) {
+                            System.out.println("No available treatments.");
+                            break;
+                        }
+                    
+                        System.out.print("Choose treatment number: ");
+                        int tidx = scanner.nextInt() - 1;
+                        scanner.nextLine(); 
+                    
+                        if (tidx < 0 || tidx >= availableTreatments.size()) {
+                            System.out.println("Invalid treatment.");
+                            break;
+                        }
+                    
+                        Treatment tr = availableTreatments.get(tidx);
+                        AppointmentBooking booking = new AppointmentBooking(p, tr, "booked");
+                        appointmentManager.bookAppointment(booking);
+                        System.out.println("Appointment booked.");
+                }
+                    
                 case 7 -> {
                     System.out.print("Enter booking ID to cancel: ");
                     String bid = scanner.nextLine();
@@ -124,9 +223,50 @@ public class Main {
                     else
                         System.out.println("Booking not found or already canceled.");
                 }
-
-                
-                
+                case 8 -> {
+                    System.out.print("Enter booking ID to mark attended: ");
+                    String bid = scanner.nextLine();
+                    appointmentManager.attendAppointment(bid);
+                    System.out.println("Marked as attended.");
+                }
+                case 9 -> {
+                        System.out.print("Enter booking ID to change: ");
+                        String bid = scanner.nextLine();
+                        System.out.println("Choose new available treatment:");
+                    
+                        List<Treatment> allAvailableTreatments = new ArrayList<>();
+                        int tIndex = 1;
+                    
+                        for (Physiotherapist t : therapists) {
+                            for (Treatment tr : t.getTimetable()) {
+                                if (appointmentManager.isTreatmentAvailable(tr)) {
+                                    System.out.println(tIndex + ". " + tr.getName() + " - " + tr.getDateTime());
+                                    allAvailableTreatments.add(tr);
+                                    tIndex++;
+                                } 
+                            }
+                        }
+                    
+                        if (allAvailableTreatments.isEmpty()) {
+                            System.out.println("No available treatments at the moment.");
+                            break;
+                        }
+                    
+                        int idx = scanner.nextInt() - 1;
+                        scanner.nextLine(); 
+                        if (idx >= 0 && idx < allAvailableTreatments.size()) {
+                            appointmentManager.changeBooking(bid, allAvailableTreatments.get(idx));
+                            System.out.println("Booking changed.");
+                        } else {
+                            System.out.println("Invalid treatment.");
+                        }
+                    }
+                    
+                case 10 -> appointmentManager.printReport();
+                case 11 -> running = false;
+                default -> System.out.println("Invalid option.");
+            }
+        }
         scanner.close();
     }
 }
