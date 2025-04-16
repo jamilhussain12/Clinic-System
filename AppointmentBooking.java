@@ -1,17 +1,17 @@
 public class AppointmentBooking {
+    private static int bookingIdCounter = 1; 
     private String bookingId;
     private Patient patient;
     private Treatment treatment;
     private String status; 
 
-    public AppointmentBooking(String bookingId, Patient patient, Treatment treatment, String status) {
-        this.bookingId = bookingId;
+    public AppointmentBooking(Patient patient, Treatment treatment, String status) {
+        this.bookingId = "B#" + String.format("%03d", bookingIdCounter++);  
         this.patient = patient;
         this.treatment = treatment;
         this.status = status;
     }
 
-    // Getters and Setters
     public String getBookingId() {
         return bookingId;
     }
@@ -38,5 +38,18 @@ public class AppointmentBooking {
     }
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public void cancelBooking() {
+        this.status = "cancelled";
+    }
+
+    public boolean changeBooking(Treatment newTreatment) {
+        if (newTreatment != null) {
+            this.treatment = newTreatment;
+            this.status = "booked"; 
+            return true;
+        }
+        return false; 
     }
 }
